@@ -386,11 +386,12 @@ body::-webkit-scrollbar-thumb {
     align-items: center;
 }
 
-.vasuk-dot {
+.dot {
     height: 10px;
     width: 10px;
     border-radius: 9999px;
     background-color: #D9D9D9;
+    cursor: pointer;
 }
 
 .active-dot {
