@@ -40,7 +40,7 @@ body::-webkit-scrollbar-thumb {
 }
 
 .container {
-    max-width: 325px;
+    max-width: 335px;
     margin: 0 auto;
     overflow-x: hidden;
     z-index: 50;
@@ -286,37 +286,49 @@ body::-webkit-scrollbar-thumb {
     margin-top: 12px;
 }
 
-.vasuk-transformation__slider {
-    margin-top: 148px;
-    position: relative;
-}
-
 .plane-img {
     position: absolute;
-    top: -125px;
-    right: -10px;
+    top: -120px;
+    right: -15px;
     z-index: 1;
 }
 
-.vasuk-transformation__slider .slider__inner {
-    display: flex;
-    transition: transform .5s ease;
+.vasuk-transformation__slider {
+    position: relative;
+    margin-top: 148px;
 }
 
-.vasuk-transformation__slider .vasuk-slide {
+.vasuk-transformation__slider .slider {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    margin: 0 auto;
+    transition: transform 0.5s ease;
+    gap: 40px;
+}
+
+
+.vasuk-transformation__slider .slide__inner {
     background-image: url("public/img/jpg/slider_bg1.jpg");
+    height: 300px;
     background-size: cover;
     padding: 62px 24px 34px 20px;
-    height: 300px;
     font-family: GolosMedium;
     display: flex;
-    flex-direction: column;
-    gap: 28px;
+    gap: 16px;
     line-height: 120%;
+}
+
+.vasuk-transformation__slider .dbl-slide {
+    flex-direction: column;
 
 }
 
-.vasuk-transformation__slider .slide__inner,
+.vasuk-transformation__slider .dbl-slide div {
+    display: flex;
+    gap: 16px;
+}
+
 .transformation__grid .slide__inner {
     display: flex;
     gap: 16px;
@@ -344,32 +356,27 @@ body::-webkit-scrollbar-thumb {
     border-radius: 9999px;
 }
 
-.vasuk-transformation__slider .slider-thumbs {
+.vasuk-transformation__slider .thumbs {
     display: flex;
     justify-content: center;
     margin-top: 28px;
     gap: 16px;
 }
 
+.arrow {
+    border: 1px solid #fff;
+    border-width: 0 2px 2px 0;
+    display: inline-block;
+    padding: 5px;
+}
+
 .arrow-container {
+    border-radius: 9999px;
+    background: #313131;
     min-width: 36px;
     min-height: 36px;
     max-width: 36px;
     max-height: 36px;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    border-radius: 9999px;
-    background: #313131;
-}
-
-.arrow {
-    border: solid #fff;
-    border-width: 0 2px 2px 0;
-    display: inline-block;
-    padding: 5px;
 }
 
 .arrow-left {
@@ -380,7 +387,13 @@ body::-webkit-scrollbar-thumb {
     transform: rotate(315deg);
 }
 
-.dot-container {
+.btn:disabled {
+    cursor: not-allowed;
+    opacity: 20%;
+}
+
+
+.dots-container {
     display: flex;
     gap: 6px;
     align-items: center;
@@ -394,14 +407,26 @@ body::-webkit-scrollbar-thumb {
     cursor: pointer;
 }
 
+.vasuk-transformation-slider__dot {
+    height: 10px;
+    width: 10px;
+    background-color: #d9d9d9;
+}
+
+.vasuk-transformation-slider__dot[aria-disabled="true"] {
+    background-color: #313131;
+}
+
+
+
 .active-dot {
     background-color: #313131;
 }
 
-.disabled-arrow {
+/* .disabled-arrow {
     opacity: 20%;
     cursor: not-allowed;
-}
+} */
 
 .transformation__grid {
     display: none;
@@ -422,6 +447,15 @@ body::-webkit-scrollbar-thumb {
 .members__slider {
     margin-top: 40px;
     font-family: GolosRegular;
+}
+
+.members__slider .slider {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    margin: 0 auto;
+    transition: transform 0.5s ease;
+    gap: 40px;
 }
 
 .members__slider .slider__inner {
@@ -471,12 +505,18 @@ body::-webkit-scrollbar-thumb {
     align-items: center;
 }
 
-.members__slider .slider-thumbs {
+.members .thumbs {
     display: flex;
     align-items: center;
     justify-content: center;
     margin-top: 40px;
     gap: 14px;
+}
+
+.members__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .slider-status {
@@ -672,6 +712,7 @@ body::-webkit-scrollbar-thumb {
     /* fourth block */
 
     .transformation__grid {
+        position: relative;
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
         gap: 20px;
@@ -717,25 +758,15 @@ body::-webkit-scrollbar-thumb {
     }
 
     .plane-img {
-        top: 450px;
-        right: 10px;
+        /* top: 450px; */
+        /* right: 10px; */
+        top: 150px;
+        right: -30px;
+
     }
 
 
 }
 
-@media (min-width: 1630px) {
-    .plane-img {
-        top: 450px;
-        right: 150px;
-    }
-}
-
-@media (min-width: 1920px) {
-    .plane-img {
-        top: 450px;
-        right: 280px;
-    }
-}
 
 /* end */

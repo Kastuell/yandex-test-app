@@ -1,224 +1,259 @@
-const vasuk_carousel = document.getElementById("vasuk_carousel");
-const vasuk_slides = document.querySelectorAll(".vasuk-slide");
-const vasukArrowLeft = document.getElementById("vasuk-arrow-left");
-const vasukArrowRight = document.getElementById("vasuk-arrow-right");
-const vasukDotContainer = document.getElementById("vasuk-dot-container");
+const sliderWrapper1 = document.querySelector(".vasuk-transformation__slider");
+const sliderContainer1 = sliderWrapper1.querySelector(".slider");
+const sliderThumbsWrapper1 = sliderWrapper1.querySelector(
+  "div.thumbs"
+);
+const dotContainer1 = sliderThumbsWrapper1.querySelector("ul.dots-container");
+const leftArrow1 = sliderThumbsWrapper1.querySelector(".left");
+const rightArrow1 = sliderThumbsWrapper1.querySelector(".right");
+const prefix1 = "vasuk-transformation-slider";
 
-function createCarousel(
-  elem,
-  slides,
-  slidesToShow,
-  leftArrow,
-  rightArrow,
-  dotContainer
-) {
-  if (window.innerWidth >= 300) {
-    slidesToShow = 1;
+const sliderScreenSizes1 = {
+  320: 1,
+  768: 2,
+  1024: 3,
+  // "320": {
+  //     slidesForView: 1,
+  //     gap: 16,
+  // },
+  // "768": {
+  //     slidesForView: 2,
+  //     gap: 16,
+  // },
+  // "1024": {
+  //     slidesForView: 3,
+  //     gap: 16,
+  // },
+};
+
+class Slider {
+  #current = 0;
+  #slides;
+  #lengthOfSlides;
+  #slideWidth;
+  #container;
+  #slidesForView;
+  #sliderScreenSizes;
+  #leftArrow;
+  #rightArrow;
+  #currentWidth;
+  #dotsLength;
+  #prevDot;
+  #dotContainer;
+  #prefix;
+  #statusContainer;
+  #status;
+
+  constructor(cfg) {
+    this.#container = cfg.container;
+    this.#sliderScreenSizes = cfg.sliderScreenSizes;
+    this.#dotContainer = cfg.dotContainer;
+    this.#leftArrow = cfg.leftArrow;
+    this.#rightArrow = cfg.rightArrow;
+    this.#prefix = cfg.prefix;
+    this.#statusContainer = cfg.statusContainer;
   }
-  if (window.innerWidth >= 768) {
-    slidesToShow = 2;
-  }
 
-  if (window.innerWidth >= 1024) {
-    slidesToShow = 3;
-  }
-
-  let current = 0;
-  let length = slides.length;
-  let slideWidth = 100 / slidesToShow;
-  let dotsLengths = length - slidesToShow + 1;
-  let dotsArr = [];
-
-  //   zeroing on resize
-  leftArrow.disabled = true;
-  leftArrow.className += " disabled-arrow";
-  rightArrow.disabled = false;
-  rightArrow.className = rightArrow.className.replace(" disabled-arrow", "");
-  elem.style.transform = `translateX(0%)`;
-
-  if (dotContainer) {
-    dotContainer.innerHTML = "";
-    for (let i = 0; i < dotsLengths; i++) {
-      if (i == 0) {
-        let div = document.createElement("i");
-        div.addEventListener("click", () => goToSlide(i));
-        div.className = "dot active-dot";
-        dotsArr.push(div);
-        continue;
-      }
-      let div = document.createElement("i");
-      div.addEventListener("click", () => goToSlide(i));
-      div.className = "dot";
-      dotsArr.push(div);
-    }
-
-    dotsArr.forEach((item) => dotContainer.append(item));
-  }
-
-  slides.forEach((slide) => {
-    slide.style.minWidth = `${slideWidth}%`;
-  });
-
-  let dots = document.querySelectorAll(".dot");
-
-  function next() {
-    if (!rightArrow.disabled) {
-      if (current < dotsLengths - 1 || (!dotContainer && current < length)) {
-        leftArrow.className = leftArrow.className.replace(
-          " disabled-arrow",
-          ""
-        );
-        leftArrow.disabled = false;
-        if (dotContainer) {
-          dots[current].className = dots[current].className.replace(
-            " active-dot",
-            ""
-          );
+  move(orient, step) {
+    switch (orient) {
+      case "next":
+        if (this.#allowedToMove(orient)) {
+          this.#container.style.transform = `translateX(calc(${(step ? this.#current + step : this.#current + 1) *
+            -this.#slideWidth
+            }% - ${step ? 40 * step : 40 * (this.#current + 1)}px))`;
+          if (step) this.#current += step;
+          else this.#current++;
+          this.#updateBtnState();
+          this.#updateDots(this.#current);
+          this.#createStatus();
         }
+        break;
 
-        elem.style.transform = `translateX(${(current + 1) * -slideWidth}%)`;
-        current++;
-        if (dotContainer) dots[current].className += " active-dot";
-      }
-      if (
-        (dotContainer && current + 1 == dotsLengths) ||
-        (!dotContainer && current + slidesToShow == length)
-      ) {
-        rightArrow.className += " disabled-arrow";
-        rightArrow.disabled = true;
-      }
+      case "prev":
+        if (this.#allowedToMove(orient)) {
+          this.#current--;
+          this.#container.style.transform = `translateX(calc(${(step ? this.#current - step : this.#current) * -this.#slideWidth
+            }% - ${step ? 40 * step : 40 * (this.#current)}px))`;
+          this.#updateBtnState();
+          this.#updateDots(this.#current);
+          this.#createStatus();
+        }
+        break;
+      default:
+        throw new Error('Supposed to be "next" or "prev" only.');
     }
   }
 
-  function prev() {
-    if (!leftArrow.disabled) {
-      if (current <= dotsLengths && current > 0) {
-        rightArrow.className = rightArrow.className.replace(
-          " disabled-arrow",
-          ""
-        );
-        rightArrow.disabled = false;
-
-        if (dotContainer)
-          dots[current].className = dots[current].className.replace(
-            " active-dot",
-            ""
-          );
-        current--;
-        elem.style.transform = `translateX(${current * -slideWidth}%)`;
-        if (dotContainer) dots[current].className += " active-dot";
-      }
-
-      if (current == 0) {
-        leftArrow.className += " disabled-arrow";
-        leftArrow.disabled = true;
-      }
+  #allowedToMove(orient) {
+    switch (orient) {
+      case "next":
+        return this.#current < this.#lengthOfSlides - this.#slidesForView;
+      case "prev":
+        return this.#current > 0;
+      default:
+        throw new Error('Supposed to be "next" or "prev" only.');
     }
   }
 
-  function goToSlide(index) {
-    if (index > current) {
-      let temp = index - current;
-      for (let i = 0; i < temp; i++) next();
-    } else if (index < current) {
-      let temp = current - index;
-      for (let i = 0; i < temp; i++) prev();
+  initSlider() {
+    this.#currentWidth = window.innerWidth;
+    this.#slides = this.#container.children;
+    this.#lengthOfSlides = this.#slides.length;
+
+    this.#renewSlidesForView();
+    this.#slideWidth = 100 / this.#slidesForView;
+    this.#updateBtnState();
+    this.#setSlidesSize();
+    this.#createDots();
+    this.#createStatus();
+    this.#updateBtnState();
+  }
+
+  #setSlidesSize() {
+    for (let i = 0; i < this.#lengthOfSlides; i++) {
+      this.#slides.item(i).style.minWidth = `${this.#slideWidth}%`;
+      //   this.#slides.item(i).style.width = `${this.#slideWidth}%`;
     }
   }
 
-  function getCurrent() {
-    return current + slidesToShow;
+  #zeroing() {
+    this.#current = 0;
+    this.#container.style.transform = `translateX(0%)`;
   }
 
-  function setCurrentZero() {
-    current = 0;
+  #renewSlidesForView() {
+    const tempObj = {};
+    Object.keys(this.#sliderScreenSizes).forEach((item) => {
+      tempObj[this.#currentWidth - item] = this.#sliderScreenSizes[item];
+    });
+
+    // const closerValue = Math.min(...Object.keys(tempObj).map(Number));
+
+    if (this.#slidesForView === Object.values(tempObj)[0]) return;
+
+    this.#slidesForView = Object.values(tempObj)[0];
+    this.#zeroing();
   }
 
-  return {
-    prev,
-    next,
-    getCurrent,
-    goToSlide,
-    setCurrentZero,
-  };
+  #updateBtnState() {
+    if (this.#current === this.#lengthOfSlides - this.#slidesForView) {
+      this.#rightArrow.disabled = true;
+      this.#leftArrow.disabled = false;
+    } else if (this.#current === 0) {
+      this.#leftArrow.disabled = true;
+      this.#rightArrow.disabled = false;
+    } else {
+      this.#rightArrow.disabled = false;
+      this.#leftArrow.disabled = false;
+    }
+  }
+
+  #createStatus() {
+    if (this.#statusContainer) {
+      this.#statusContainer.innerHTML = "";
+      this.#status = this.#current + this.#slidesForView;
+      const status = document.createElement("p");
+      status.innerHTML = `
+            <span class="current-status">${this.#status}</span>
+            /
+            ${this.#lengthOfSlides}
+        `;
+      this.#statusContainer.append(status);
+    }
+  }
+
+  #clickOnDot(cur) {
+    if (cur !== this.#prevDot) {
+      const temp = cur - this.#prevDot;
+      if (Math.abs(temp) === temp) {
+        this.move("next", temp);
+      } else {
+        this.move("prev", Math.abs(temp) - 1);
+      }
+      this.#updateDots;
+    }
+  }
+
+  #updateDots(cur) {
+    if (this.#dotContainer) {
+      this.#dotContainer.children[cur].ariaDisabled = true;
+      this.#dotContainer.children[this.#prevDot].ariaDisabled = false;
+      this.#prevDot = cur;
+    }
+  }
+
+  #createDots() {
+    if (this.#dotContainer) {
+      if (this.#dotsLength === this.#lengthOfSlides + 1 - this.#slidesForView)
+        return;
+      this.#dotContainer.innerHTML = "";
+      this.#prevDot = 0;
+      this.#dotsLength = this.#lengthOfSlides + 1 - this.#slidesForView;
+      for (let i = 0; i < this.#dotsLength; i++) {
+        const dot = document.createElement("li");
+        dot.className = `dot ${this.#prefix}__dot`;
+        dot.ariaDisabled = false;
+        dot.onclick = () => this.#clickOnDot(i);
+        if (i === 0) dot.ariaDisabled = true;
+        this.#dotContainer.append(dot);
+      }
+    }
+  }
 }
 
-let carousel1 = createCarousel(
-  vasuk_carousel,
-  vasuk_slides,
-  1,
-  vasukArrowLeft,
-  vasukArrowRight,
-  vasukDotContainer
-);
+const slider1Cfg = {
+  container: sliderContainer1,
+  sliderScreenSizes: sliderScreenSizes1,
+  dotContainer: dotContainer1,
+  leftArrow: leftArrow1,
+  rightArrow: rightArrow1,
+  prefix: prefix1,
+};
 
-let { next: vNext, prev: vPrev } = carousel1;
-vasukArrowLeft.addEventListener("click", vPrev);
-vasukArrowRight.addEventListener("click", vNext);
+const slider1 = new Slider(slider1Cfg);
+slider1.initSlider();
+
+rightArrow1.addEventListener("click", () => slider1.move("next"));
+leftArrow1.addEventListener("click", () => slider1.move("prev"));
 
 window.addEventListener("resize", () => {
-  carousel1.setCurrentZero();
-  carousel1 = createCarousel(
-    vasuk_carousel,
-    vasuk_slides,
-    1,
-    vasukArrowLeft,
-    vasukArrowRight,
-    vasukDotContainer
-  );
+  slider1.initSlider();
 });
 
-const membersSlider = document.getElementById("members-slider");
-const membSlides = document.querySelectorAll(".slide-members");
-const membersArrowLeft = document.getElementById("members-arrow-left");
-const membersArrowRight = document.getElementById("members-arrow-right");
-const membersStatus = document.getElementById("members-status");
-
-let carousel2 = createCarousel(
-  membersSlider,
-  membSlides,
-  1,
-  membersArrowLeft,
-  membersArrowRight,
-  null
+const sliderWrapper2 = document.querySelector(".members__slider");
+const sliderContainer2 = sliderWrapper2.querySelector(".slider");
+const sliderThumbsWrapper2 = document.querySelector(
+  ".members"
+).querySelector("div.thumbs");
+const statusContainer2 = sliderThumbsWrapper2.querySelector(
+  "div.status-container"
 );
+const leftArrow2 = sliderThumbsWrapper2.querySelector(".left");
+const rightArrow2 = sliderThumbsWrapper2.querySelector(".right");
+const prefix2 = "members-slider"
 
-let { next: mNext, prev: mPrev, getCurrent: mGetCurrent } = carousel2;
-membersStatus.innerHTML = `
-        <span class="slider-status__current">${mGetCurrent()}</span> / ${
-    membSlides.length
-  }
-    `;
+const sliderScreenSizes2 = {
+  320: 1,
+  768: 2,
+  1024: 3,
+};
 
-function membersNext() {
-  mNext();
-  membersStatus.innerHTML = `
-        <span class="slider-status__current">${mGetCurrent()}</span> / ${
-    membSlides.length
-  }
-    `;
-}
+const slider2Cfg = {
+  container: sliderContainer2,
+  sliderScreenSizes: sliderScreenSizes2,
+  dotContainer: null,
+  leftArrow: leftArrow2,
+  rightArrow: rightArrow2,
+  prefix: prefix2,
+  statusContainer: statusContainer2,
+};
 
-function membersPrev() {
-  mPrev();
-  membersStatus.innerHTML = `
-        <span class="slider-status__current">${mGetCurrent()}</span> / ${
-    membSlides.length
-  }
-    `;
-}
+const slider2 = new Slider(slider2Cfg);
+slider2.initSlider();
 
-membersArrowLeft.addEventListener("click", membersPrev);
-membersArrowRight.addEventListener("click", membersNext);
+rightArrow2.addEventListener("click", () => slider2.move("next"));
+leftArrow2.addEventListener("click", () => slider2.move("prev"));
 
 window.addEventListener("resize", () => {
-  carousel2.setCurrentZero();
-  carousel2 = createCarousel(
-    membersSlider,
-    membSlides,
-    1,
-    membersArrowLeft,
-    membersArrowRight,
-    null
-  );
+  slider2.initSlider();
 });
