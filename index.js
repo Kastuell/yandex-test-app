@@ -1,8 +1,6 @@
 const sliderWrapper1 = document.querySelector(".vasuk-transformation__slider");
 const sliderContainer1 = sliderWrapper1.querySelector(".slider");
-const sliderThumbsWrapper1 = sliderWrapper1.querySelector(
-  "div.thumbs"
-);
+const sliderThumbsWrapper1 = sliderWrapper1.querySelector("div.thumbs");
 const dotContainer1 = sliderThumbsWrapper1.querySelector("ul.dots-container");
 const leftArrow1 = sliderThumbsWrapper1.querySelector(".left");
 const rightArrow1 = sliderThumbsWrapper1.querySelector(".right");
@@ -12,18 +10,6 @@ const sliderScreenSizes1 = {
   320: 1,
   768: 2,
   1024: 3,
-  // "320": {
-  //     slidesForView: 1,
-  //     gap: 16,
-  // },
-  // "768": {
-  //     slidesForView: 2,
-  //     gap: 16,
-  // },
-  // "1024": {
-  //     slidesForView: 3,
-  //     gap: 16,
-  // },
 };
 
 class Slider {
@@ -58,9 +44,10 @@ class Slider {
     switch (orient) {
       case "next":
         if (this.#allowedToMove(orient)) {
-          this.#container.style.transform = `translateX(calc(${(step ? this.#current + step : this.#current + 1) *
+          this.#container.style.transform = `translateX(calc(${
+            (step ? this.#current + step : this.#current + 1) *
             -this.#slideWidth
-            }% - ${step ? 40 * step : 40 * (this.#current + 1)}px))`;
+          }% - ${step ? 40 * step : 40 * (this.#current + 1)}px))`;
           if (step) this.#current += step;
           else this.#current++;
           this.#updateBtnState();
@@ -72,8 +59,9 @@ class Slider {
       case "prev":
         if (this.#allowedToMove(orient)) {
           this.#current--;
-          this.#container.style.transform = `translateX(calc(${(step ? this.#current - step : this.#current) * -this.#slideWidth
-            }% - ${step ? 40 * step : 40 * (this.#current)}px))`;
+          this.#container.style.transform = `translateX(calc(${
+            (step ? this.#current - step : this.#current) * -this.#slideWidth
+          }% - ${step ? 40 * step : 40 * this.#current}px))`;
           this.#updateBtnState();
           this.#updateDots(this.#current);
           this.#createStatus();
@@ -112,7 +100,6 @@ class Slider {
   #setSlidesSize() {
     for (let i = 0; i < this.#lengthOfSlides; i++) {
       this.#slides.item(i).style.minWidth = `${this.#slideWidth}%`;
-      //   this.#slides.item(i).style.width = `${this.#slideWidth}%`;
     }
   }
 
@@ -126,9 +113,6 @@ class Slider {
     Object.keys(this.#sliderScreenSizes).forEach((item) => {
       tempObj[this.#currentWidth - item] = this.#sliderScreenSizes[item];
     });
-
-    // const closerValue = Math.min(...Object.keys(tempObj).map(Number));
-
     if (this.#slidesForView === Object.values(tempObj)[0]) return;
 
     this.#slidesForView = Object.values(tempObj)[0];
@@ -137,28 +121,54 @@ class Slider {
 
   #updateBtnState() {
     if (this.#current === this.#lengthOfSlides - this.#slidesForView) {
-      this.#rightArrow.disabled = true;
-      this.#leftArrow.disabled = false;
+      if (this.#rightArrow.length) {
+        for (let i = 0; i < this.#rightArrow.length; i++) {
+          this.#rightArrow[i].disabled = true;
+          this.#leftArrow[i].disabled = false;
+        }
+      } else {
+        this.#rightArrow.disabled = true;
+        this.#leftArrow.disabled = false;
+      }
     } else if (this.#current === 0) {
-      this.#leftArrow.disabled = true;
-      this.#rightArrow.disabled = false;
+      if (this.#rightArrow.length) {
+        for (let i = 0; i < this.#rightArrow.length; i++) {
+          this.#rightArrow[i].disabled = false;
+          this.#leftArrow[i].disabled = true;
+        }
+      } else {
+        this.#rightArrow.disabled = false;
+        this.#leftArrow.disabled = true;
+      }
     } else {
-      this.#rightArrow.disabled = false;
-      this.#leftArrow.disabled = false;
+      if (this.#rightArrow.length) {
+        for (let i = 0; i < this.#rightArrow.length; i++) {
+          this.#rightArrow[i].disabled = false;
+          this.#leftArrow[i].disabled = false;
+        }
+      } else {
+        this.#rightArrow.disabled = false;
+        this.#leftArrow.disabled = false;
+      }
     }
   }
 
   #createStatus() {
     if (this.#statusContainer) {
-      this.#statusContainer.innerHTML = "";
-      this.#status = this.#current + this.#slidesForView;
-      const status = document.createElement("p");
-      status.innerHTML = `
-            <span class="current-status">${this.#status}</span>
+      for (let i = 0; i < this.#statusContainer.length; i++) {
+        this.#statusContainer[i].innerHTML = "";
+        this.#status = this.#current + this.#slidesForView;
+        const status = document.createElement("p");
+        status.innerHTML = `
+            <span style="opacity: 100%;" class="current-status">${
+              this.#status
+            }</span>
             /
-            ${this.#lengthOfSlides}
+            <span style="opacity: 60%;">${this.#lengthOfSlides}</span>
+            
         `;
-      this.#statusContainer.append(status);
+        this.#statusContainer[i].append(status);
+      }
     }
   }
 
@@ -222,15 +232,17 @@ window.addEventListener("resize", () => {
 
 const sliderWrapper2 = document.querySelector(".members__slider");
 const sliderContainer2 = sliderWrapper2.querySelector(".slider");
-const sliderThumbsWrapper2 = document.querySelector(
-  ".members"
-).querySelector("div.thumbs");
-const statusContainer2 = sliderThumbsWrapper2.querySelector(
-  "div.status-container"
-);
-const leftArrow2 = sliderThumbsWrapper2.querySelector(".left");
-const rightArrow2 = sliderThumbsWrapper2.querySelector(".right");
-const prefix2 = "members-slider"
+const sliderThumbsWrapper2 = document
+  .querySelector(".members")
+  .querySelectorAll("div.thumbs");
+const statusContainer2 = document
+  .querySelector(".members")
+  .querySelectorAll("div.status-container");
+const leftArrow2 = document.querySelector(".members").querySelectorAll(".left");
+const rightArrow2 = document
+  .querySelector(".members")
+  .querySelectorAll(".right");
+const prefix2 = "members-slider";
 
 const sliderScreenSizes2 = {
   320: 1,
@@ -251,8 +263,10 @@ const slider2Cfg = {
 const slider2 = new Slider(slider2Cfg);
 slider2.initSlider();
 
-rightArrow2.addEventListener("click", () => slider2.move("next"));
-leftArrow2.addEventListener("click", () => slider2.move("prev"));
+for (let i = 0; i < rightArrow2.length; i++) {
+  rightArrow2[i].addEventListener("click", () => slider2.move("next"));
+  leftArrow2[i].addEventListener("click", () => slider2.move("prev"));
+}
 
 window.addEventListener("resize", () => {
   slider2.initSlider();
