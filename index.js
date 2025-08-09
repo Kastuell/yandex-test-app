@@ -29,6 +29,9 @@ class Slider {
   #prefix;
   #statusContainer;
   #status;
+  #autoMode;
+  #autoModeMs;
+  #infinite;
 
   constructor(cfg) {
     this.#container = cfg.container;
@@ -38,18 +41,24 @@ class Slider {
     this.#rightArrow = cfg.rightArrow;
     this.#prefix = cfg.prefix;
     this.#statusContainer = cfg.statusContainer;
+    this.#autoMode = cfg.autoMode;
+    this.#autoModeMs = cfg.autoModeMs;
+    this.#infinite = cfg.infinite;
   }
 
   move(orient, step) {
     switch (orient) {
       case "next":
         if (this.#allowedToMove(orient)) {
-          this.#container.style.transform = `translateX(calc(${
-            (step ? this.#current + step : this.#current + 1) *
-            -this.#slideWidth
-          }% - ${step ? 40 * step : 40 * (this.#current + 1)}px))`;
-          if (step) this.#current += step;
-          else this.#current++;
+          if (this.#infinite && (this.#current === this.#lengthOfSlides - this.#slidesForView)) {
+            this.#zeroing();
+          } else {
+            this.#container.style.transform = `translateX(calc(${(step ? this.#current + step : (this.#current + 1)) *
+              -this.#slideWidth
+              }% - ${step ? 40 * step : 40 * (this.#current + 1)}px))`;
+            if (step) this.#current += step;
+            else this.#current++;
+          }
           this.#updateBtnState();
           this.#updateDots(this.#current);
           this.#createStatus();
@@ -58,10 +67,16 @@ class Slider {
 
       case "prev":
         if (this.#allowedToMove(orient)) {
-          this.#current--;
-          this.#container.style.transform = `translateX(calc(${
-            (step ? this.#current - step : this.#current) * -this.#slideWidth
-          }% - ${step ? 40 * step : 40 * this.#current}px))`;
+          if (this.#infinite && this.#current === 0) {
+            this.#current = this.#lengthOfSlides - this.#slidesForView;
+            this.#container.style.transform = `translateX(calc(${((this.#current)) *
+              -this.#slideWidth
+              }% - ${40 * (this.#current)}px))`;
+          } else {
+            this.#current--;
+            this.#container.style.transform = `translateX(calc(${(step ? this.#current - step : this.#current) * -this.#slideWidth
+              }% - ${step ? 40 * step : 40 * this.#current}px))`;
+          }
           this.#updateBtnState();
           this.#updateDots(this.#current);
           this.#createStatus();
@@ -75,9 +90,18 @@ class Slider {
   #allowedToMove(orient) {
     switch (orient) {
       case "next":
-        return this.#current < this.#lengthOfSlides - this.#slidesForView;
+        if (!this.#infinite) {
+          return this.#current < this.#lengthOfSlides - this.#slidesForView;
+        } else {
+          return true;
+        }
       case "prev":
-        return this.#current > 0;
+        console.log("qwe1")
+        if (!this.#infinite) {
+          return this.#current > 0;
+        } else {
+          return true;
+        }
       default:
         throw new Error('Supposed to be "next" or "prev" only.');
     }
@@ -90,11 +114,25 @@ class Slider {
 
     this.#renewSlidesForView();
     this.#slideWidth = 100 / this.#slidesForView;
-    this.#updateBtnState();
     this.#setSlidesSize();
     this.#createDots();
     this.#createStatus();
     this.#updateBtnState();
+    this.#auto()
+  }
+
+  #auto() {
+    if (this.#autoMode) {
+      let timer = setInterval(() => {
+        if (this.#current === this.#lengthOfSlides - this.#slidesForView) {
+          this.#zeroing()
+          this.#updateDots(this.#current)
+          this.#updateBtnState()
+        } else {
+          this.move("next");
+        }
+      }, this.#autoModeMs)
+    }
   }
 
   #setSlidesSize() {
@@ -120,37 +158,40 @@ class Slider {
   }
 
   #updateBtnState() {
-    if (this.#current === this.#lengthOfSlides - this.#slidesForView) {
-      if (this.#rightArrow.length) {
-        for (let i = 0; i < this.#rightArrow.length; i++) {
-          this.#rightArrow[i].disabled = true;
-          this.#leftArrow[i].disabled = false;
+    if (this.#infinite) {
+      return;
+    } else
+      if (this.#current === this.#lengthOfSlides - this.#slidesForView) {
+        if (this.#rightArrow.length) {
+          for (let i = 0; i < this.#rightArrow.length; i++) {
+            this.#rightArrow[i].disabled = true;
+            this.#leftArrow[i].disabled = false;
+          }
+        } else {
+          this.#rightArrow.disabled = true;
+          this.#leftArrow.disabled = false;
+        }
+      } else if (this.#current === 0) {
+        if (this.#rightArrow.length) {
+          for (let i = 0; i < this.#rightArrow.length; i++) {
+            this.#rightArrow[i].disabled = false;
+            this.#leftArrow[i].disabled = true;
+          }
+        } else {
+          this.#rightArrow.disabled = false;
+          this.#leftArrow.disabled = true;
         }
       } else {
-        this.#rightArrow.disabled = true;
-        this.#leftArrow.disabled = false;
-      }
-    } else if (this.#current === 0) {
-      if (this.#rightArrow.length) {
-        for (let i = 0; i < this.#rightArrow.length; i++) {
-          this.#rightArrow[i].disabled = false;
-          this.#leftArrow[i].disabled = true;
+        if (this.#rightArrow.length) {
+          for (let i = 0; i < this.#rightArrow.length; i++) {
+            this.#rightArrow[i].disabled = false;
+            this.#leftArrow[i].disabled = false;
+          }
+        } else {
+          this.#rightArrow.disabled = false;
+          this.#leftArrow.disabled = false;
         }
-      } else {
-        this.#rightArrow.disabled = false;
-        this.#leftArrow.disabled = true;
       }
-    } else {
-      if (this.#rightArrow.length) {
-        for (let i = 0; i < this.#rightArrow.length; i++) {
-          this.#rightArrow[i].disabled = false;
-          this.#leftArrow[i].disabled = false;
-        }
-      } else {
-        this.#rightArrow.disabled = false;
-        this.#leftArrow.disabled = false;
-      }
-    }
   }
 
   #createStatus() {
@@ -160,9 +201,8 @@ class Slider {
         this.#status = this.#current + this.#slidesForView;
         const status = document.createElement("p");
         status.innerHTML = `
-            <span style="opacity: 100%;" class="current-status">${
-              this.#status
-            }</span>
+            <span style="opacity: 100%;" class="current-status">${this.#status
+          }</span>
             /
             <span style="opacity: 60%;">${this.#lengthOfSlides}</span>
             
@@ -180,11 +220,11 @@ class Slider {
       } else {
         this.move("prev", Math.abs(temp) - 1);
       }
-      this.#updateDots;
     }
   }
 
   #updateDots(cur) {
+    console.log(cur, this.#prevDot)
     if (this.#dotContainer) {
       this.#dotContainer.children[cur].ariaDisabled = true;
       this.#dotContainer.children[this.#prevDot].ariaDisabled = false;
@@ -218,7 +258,11 @@ const slider1Cfg = {
   leftArrow: leftArrow1,
   rightArrow: rightArrow1,
   prefix: prefix1,
+  autoMode: true,
+  autoModeMs: 10000,
+  infinite: true,
 };
+
 
 const slider1 = new Slider(slider1Cfg);
 slider1.initSlider();
@@ -253,12 +297,16 @@ const sliderScreenSizes2 = {
 const slider2Cfg = {
   container: sliderContainer2,
   sliderScreenSizes: sliderScreenSizes2,
-  dotContainer: null,
   leftArrow: leftArrow2,
   rightArrow: rightArrow2,
   prefix: prefix2,
   statusContainer: statusContainer2,
+  dotContainer: null,
 };
+
+
+
+
 
 const slider2 = new Slider(slider2Cfg);
 slider2.initSlider();
